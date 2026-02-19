@@ -1,65 +1,133 @@
-import Image from "next/image";
+// src/app/page.tsx
+import { Suspense } from "react";
+import Navbar from "@/components/shared/Navbar";
+import Hero from "@/components/shared/Hero";
+import CategoryBar from "@/components/shared/CategoryBar";
+import ProductGrid from "@/components/business/ProductGrid";
+import Footer from "@/components/shared/Footer";
+import { Skeleton } from "@/components/ui/skeleton";
+import { prisma } from "@/lib/prisma";
+import ScrollToExplore from "@/components/shared/ScrollToExplore"; // Komponen Client Baru
 
-export default function Home() {
+/**
+ * BusinessList (Server Component)
+ * Mengambil data produk berdasarkan parameter pencarian dan kategori secara real-time.
+ */
+async function BusinessList({ search, category }: { search?: string; category?: string }) {
+  const products = await prisma.product.findMany({
+    where: {
+      business: {
+        isApproved: true,
+        ...(category && { category: { slug: category } }),
+      },
+      OR: search ? [
+        { name: { contains: search, mode: "insensitive" } },
+        { business: { name: { contains: search, mode: "insensitive" } } }
+      ] : undefined
+    },
+    include: { 
+      business: { include: { category: true } } 
+    },
+    orderBy: { 
+      createdAt: 'desc' 
+    }
+  });
+
+  const formattedProducts = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    description: p.description,
+    image: p.image,
+    businessName: p.business.name,
+    businessSlug: p.business.slug,
+    whatsapp: p.business.whatsapp, 
+  }));
+
+  if (formattedProducts.length === 0) {
+    return (
+      <div className="text-center py-24 px-6 border-4 border-dashed rounded-[3rem] border-[oklch(0.85_0.05_75)] bg-[oklch(0.95_0.03_75)]/50">
+        <p className="text-[oklch(0.45_0.08_35)] font-serif italic text-xl">
+          {search ? `Menu "${search}" tidak ditemukan...` : "Belum ada menu di kategori ini."}
+        </p>
+        <p className="text-[oklch(0.25_0.06_35)]/60 text-sm mt-2 font-medium uppercase tracking-widest">
+          Coba kata kunci lain atau pilih semua menu
+        </p>
+      </div>
+    );
+  }
+
+  return <ProductGrid products={formattedProducts} />;
+}
+
+/**
+ * PAGE UTAMA
+ */
+export default async function Home({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ search?: string; category?: string }> 
+}) {
+  const { search, category } = await searchParams;
+
+  const categories = await prisma.category.findMany({ 
+    orderBy: { name: 'asc' } 
+  });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-[oklch(0.92_0.04_75)] overflow-x-hidden">
+      {/* Logic Scroll Client Side */}
+      <Suspense>
+        <ScrollToExplore />
+      </Suspense>
+
+      <Navbar />
+      
+      {/* SLIDE 1: Hero Section */}
+      <Hero />
+      
+      {/* SLIDE 2: Explore Section */}
+      <div id="explore-section" className="relative z-10 bg-[oklch(0.92_0.04_75)]">
+        
+        {/* Sticky Container */}
+        <div className="sticky top-0 md:top-20 z-40 bg-[oklch(0.92_0.04_75)]/90 backdrop-blur-xl border-b border-[oklch(0.85_0.05_75)] shadow-sm">
+          <div className="max-w-7xl mx-auto px-6 py-8">
+            <Suspense fallback={<div className="h-20 animate-pulse bg-[oklch(0.88_0.04_75)] rounded-3xl" />}>
+              <CategoryBar categories={categories} />
+            </Suspense>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        
+        {/* Product Section */}
+        <section className="max-w-7xl mx-auto px-6 py-16 md:py-24 min-h-screen">
+          {(search || category) && (
+            <div className="mb-12 animate-in fade-in slide-in-from-left-4 duration-500">
+              <span className="text-[oklch(0.58_0.18_45)] font-bold tracking-[0.3em] text-[10px] uppercase">
+                Menampilkan Hasil
+              </span>
+              <h2 className="text-3xl md:text-5xl font-serif text-[oklch(0.25_0.06_35)] mt-2 capitalize">
+                {search ? `“${search}”` : category ? `${category.replace(/-/g, ' ')}` : ""}
+              </h2>
+            </div>
+          )}
+
+          <Suspense key={search || category} fallback={<GridSkeleton />}>
+            <BusinessList search={search} category={category} />
+          </Suspense>
+        </section>
+
+        <Footer />
+      </div>
+    </main>
+  );
+}
+
+function GridSkeleton() {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <Skeleton key={i} className="aspect-[4/5] md:aspect-square w-full rounded-[2.5rem] bg-[oklch(0.88_0.04_75)]" />
+      ))}
     </div>
   );
 }

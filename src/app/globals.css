@@ -1,26 +1,105 @@
 @import "tailwindcss";
+@plugin "tailwindcss-animate";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* DI TAILWIND V4, SEMUA EXTEND TEMA HARUS MASUK DI SINI 
+  Termasuk animasi dan keyframes agar tidak error "class not found"
+*/
+@theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+  
+  /* Mapping Warna */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* [PERBAIKAN 1]: Tambahkan Card dan Muted yang tertinggal di mapping */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Radius */
+  --radius-xl: var(--radius);
+
+  /* [PERBAIKAN 2]: Definisikan Animasi Langsung di Tema */
+  --animate-slow-zoom: slow-zoom 25s infinite alternate ease-in-out;
+  
+  @keyframes slow-zoom {
+    from { transform: scale(1); }
+    to { transform: scale(1.15); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  :root {
+    /* PALET HERITAGE SULAWESI - KALIBRASI TINGGI */
+    --background: oklch(0.92 0.04 75); 
+    --foreground: oklch(0.25 0.06 35); 
+    
+    --card: oklch(0.95 0.03 75);
+    --card-foreground: oklch(0.25 0.06 35);
+  
+    --primary: oklch(0.32 0.10 25); 
+    --primary-foreground: oklch(0.92 0.04 75);
+  
+    --secondary: oklch(0.58 0.18 45); 
+    --secondary-foreground: oklch(0.98 0.02 75);
+  
+    --muted: oklch(0.88 0.04 75);
+    --muted-foreground: oklch(0.45 0.08 35);
+  
+    --accent: oklch(0.78 0.12 85);
+    --accent-foreground: oklch(0.28 0.08 35);
+  
+    --border: oklch(0.85 0.05 75);
+    --input: oklch(0.85 0.05 75);
+    --ring: oklch(0.32 0.10 25);
+    
+    --radius: 2rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Tekstur kertas antik */
+    background-image: url("https://www.transparenttextures.com/patterns/p6.png");
+  }
+
+  /* Judul menggunakan font Serif agar terlihat historis */
+  h1, h2, h3, .font-serif {
+    color: var(--primary);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { 
+    display: none; 
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* [PERBAIKAN 3]: Efek Glassmorphism menggunakan native CSS mix agar tidak error saat build */
+  .heritage-glass {
+    background-color: color-mix(in srgb, var(--background) 80%, transparent);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border);
+  }
 }

@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PriceRange {
+  CHEAP
+  MID_RANGE
+  PREMIUM
+  LUXURY
+}
+
+enum UserRole {
+  ADMIN
+  OWNER
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  password      String     
+  role          UserRole   @default(OWNER) // Poin 6: Tahta Tertinggi
+  businesses    Business[]
+  createdAt     DateTime   @default(now())
+}
+
+model Category {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  slug       String     @unique
+  businesses Business[]
+}
+
+model Business {
+  id            String     @id @default(cuid())
+  ownerId       String
+  owner         User       @relation(fields: [ownerId], references: [id])
+  name          String
+  slug          String     @unique
+  description   String     @db.Text
+  address       String
+  whatsapp      String     
+  isHalal       Boolean    @default(true)
+  isApproved    Boolean    @default(false) // Poin 6: Kontrol Admin
+  priceRange    PriceRange @default(MID_RANGE)
+  imageMain     String     
+  operatingHours Json       
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id])
+  products      Product[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  name        String
+  description String   @db.Text
+  price       Float
+  image       String
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}

@@ -1,9 +1,9 @@
 import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import nextVitals from "eslint-config-next/core-web-vitals.js"; // <-- Tambahkan .js di sini
+import nextTs from "eslint-config-next/typescript.js"; // <-- Tambahkan .js juga di sini untuk aman
 
 const eslintConfig = defineConfig([
-  ...nextVitals,
+  ...nextVitals, // Sekarang menggunakan yang ada .js nya
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
